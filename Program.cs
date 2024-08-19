@@ -25,9 +25,10 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IProductService,ProductService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
-
+builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

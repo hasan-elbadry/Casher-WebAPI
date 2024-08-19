@@ -11,8 +11,8 @@
             _Productservices = services;
         }
 
-        [Authorize(Roles = "User")]
         [HttpGet]
+        [Authorize(Roles = "User,Admin")]
         public IActionResult GetAll()
         {
             var Products = _Productservices.GetAll();
@@ -20,7 +20,7 @@
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "User,Admin")]
         public IActionResult GetById(int id)
         {
             var Product = _Productservices.GetById(id);
@@ -47,6 +47,8 @@
                 return BadRequest(ModelState);
 
             var product = _Productservices.Update(productDto);
+            if (product == null)
+                return BadRequest(new {error = $"there it no exist product with this id {productDto.Id}"});
             return Ok(product);
         }
 

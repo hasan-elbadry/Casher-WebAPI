@@ -43,10 +43,11 @@
 
         public ProductDto Update(ProductDto productDto)
         {
+            if (!_context.Products.Any(x => x.Id == productDto.Id))
+                return null!;
             var Product = _mapper.Map<Product>(productDto);
             _context.Update(Product);
             _context.SaveChanges();
-
             return _mapper.Map<ProductDto>(Product);
         }
     }

@@ -4,13 +4,11 @@
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _UserManager;
-        private readonly ITokenService _tokenService;
+        private readonly IAccountService _accountService;
 
-        public AccountController(UserManager<IdentityUser> userManager, ITokenService tokenService)
+        public AccountController(IAccountService accountService)
         {
-            _UserManager = userManager;
-            _tokenService = tokenService;
+            _accountService = accountService;
         }
 
         [HttpPost("register")]
@@ -20,35 +18,25 @@
             if(!ModelState.IsValid) 
                 return BadRequest(ModelState);
 
-            var user = new IdentityUser
-            {
-                UserName = registerDto.Username,
-                Email = registerDto.Email,
-            };
+            var Result = await _accountService.Register(registerDto);
+            if(Result == true)
+                return Ok("User have registered Seccuessfully");
 
-           var result = await _UserManager.CreateAsync(user,registerDto.Password);
-            if (result.Succeeded)
-            {
-                await _UserManager.AddToRoleAsync(user, "User");
-            }
-            else
-                return BadRequest(result.Errors);
-
-            return Ok("User have registered Seccuess");
+            return BadRequest(new { error = "user is already have an account, try to login"});
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            var user = await _UserManager.FindByNameAsync(loginDto.Username);
-            if (user == null)
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var token = await _accountService.Login(loginDto);
+
+            if (token == null)
                 return Unauthorized("Invalid username or password");
 
-            bool IsPasswordValid = await _UserManager.CheckPasswordAsync(user, loginDto.Password);
-            if (!IsPasswordValid)
-                return Unauthorized("Invalid username or password");
-
-            return Ok(await _tokenService.GetToken(user));
+            return Ok(new { token = token });
         }
     }
 }

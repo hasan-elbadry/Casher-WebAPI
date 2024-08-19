@@ -1,14 +1,15 @@
-﻿namespace Task1.Services
+﻿using Task1.Settings;
+
+namespace Task1.Services
 {
     public class TokenService : ITokenService
     {
-        private readonly IConfiguration _configuration;
-
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly JwtSettings _jwtSettings;
 
-        public TokenService(IConfiguration configuration, UserManager<IdentityUser> userManager = null)
+        public TokenService(JwtSettings jwtSettings, UserManager<IdentityUser> userManager = null)
         {
-            _configuration = configuration;
+            _jwtSettings = jwtSettings;
             _userManager = userManager;
         }
 
@@ -28,12 +29,12 @@
                 claims.Add(new Claim(ClaimTypes.Role,role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
                 claims: claims,
                 expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds
