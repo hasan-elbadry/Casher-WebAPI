@@ -1,10 +1,4 @@
-
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Task1.Services;
+using Task1.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,13 +11,6 @@ builder.Services.AddDbContext<AppDbContext>(
     options => options
     .UseSqlServer(builder.Configuration
     .GetConnectionString("DefaultConnection")));
-
-builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddScoped<IProductService,ProductService>();
-builder.Services.AddScoped<IInvoiceService, InvoiceService>();
-
-builder.Services.AddScoped<ITokenService, TokenService>();
-
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
@@ -34,7 +21,12 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 }).AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddScoped<IProductService,ProductService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -47,14 +39,12 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        ValidIssuer = jwtOptions.Issuer,
+        ValidAudience = jwtOptions.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key))
     };
 });
-
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
